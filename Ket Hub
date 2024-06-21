@@ -1,17 +1,190 @@
-loadstring(game:HttpGet("https://rawscripts.net/raw/Baseplate-adonis-and-newindex-bypass-source-12378",true))()
-local OrionLib = loadstring(game:HttpGet('https://raw.githubusercontent.com/shlexware/Orion/main/source'))()
-local Window = OrionLib:MakeWindow({Name = "Minecraft (Ket Hub)", HidePremium = false, SaveConfig = true, ConfigFolder = "OrionTest", IntroEnabled = false})
+loadstring(game:HttpGet("https://rawscripts.net/raw/Baseplate-adonis-and-newindex-bypass-source-12378", true))()
+local OrionLib = loadstring(game:HttpGet('https://raw.githubusercontent.com/thanhdat4461/OrionMoblie/main/source'))()
+local HttpService = game:GetService("HttpService")
 
--- func
+-- Configuration handling
+local ConfigFolder = "OrionTest"
+local ConfigFile = ConfigFolder .. "/config.json"
+
+local function SaveConfig(data)
+    local jsonData = HttpService:JSONEncode(data)
+    if not isfolder(ConfigFolder) then
+        makefolder(ConfigFolder)
+    end
+    writefile(ConfigFile, jsonData)
+end
+
+local function LoadConfig()
+    if isfile(ConfigFile) then
+        local jsonData = readfile(ConfigFile)
+        return HttpService:JSONDecode(jsonData)
+    end
+    return {}
+end
+
+local config = LoadConfig()
+
+-- Create window
+local Window = OrionLib:MakeWindow({Name = "Minecraft (Ket Hub)", HidePremium = false, SaveConfig = true, ConfigFolder = ConfigFolder, IntroEnabled = false})
+
+-- Utility function for dragging GUI
+local function makeDraggable(frame)
+    local UIS = game:GetService("UserInputService")
+    local dragging
+    local dragInput
+    local dragStart
+    local startPos
+
+    local function update(input)
+        local delta = input.Position - dragStart
+        frame.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
+    end
+
+    frame.InputBegan:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+            dragging = true
+            dragStart = input.Position
+            startPos = frame.Position
+
+            input.Changed:Connect(function()
+                if input.UserInputState == Enum.UserInputState.End then
+                    dragging = false
+                end
+            end)
+        end
+    end)
+
+    frame.InputChanged:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch then
+            dragInput = input
+        end
+    end)
+
+    UIS.InputChanged:Connect(function(input)
+        if input == dragInput and dragging then
+            update(input)
+        end
+    end)
+end
+
+-- functions
 function KillAura()
     if getgenv().KillAura then
-        loadstring(game:HttpGet("https://raw.githubusercontent.com/screengui/sidescripts/main/killaura.lua",true))()
+        loadstring(game:HttpGet("https://raw.githubusercontent.com/screengui/sidescripts/main/killaura.lua", true))()
     end
 end
 
-local function toggleChestEsp()
-    loadstring(game:HttpGet("https://raw.githubusercontent.com/screengui/sidescripts/main/ChestESP.lua",true))()
+function toggleChestEsp()
+    getgenv().chestEspEnabled = not getgenv().chestEspEnabled
+    config.chestEspEnabled = getgenv().chestEspEnabled
+    SaveConfig(config)
+    if getgenv().chestEspEnabled then
+        spawn(function()
+            while getgenv().chestEspEnabled do
+                local parentFolder = workspace.Blocks
+
+                local function checkFolderForChildParts(folder)
+                    local childParts = {}
+                    local children = folder:GetChildren()
+                    for _, child in pairs(children) do
+                        if child.Name == "Chest" then
+                            table.insert(childParts, child)
+                        end
+                    end
+                    return childParts
+                end
+
+                local function outlinePart(part)
+                    if not part:FindFirstChild("CHEST_out") then
+                        local a = Instance.new("BoxHandleAdornment")
+                        a.Name = "CHEST_out"
+                        a.Parent = part
+                        a.Adornee = part
+                        a.AlwaysOnTop = true
+                        a.ZIndex = 0
+                        a.Size = part.Size
+                        a.Transparency = 0.3
+                        a.Color = BrickColor.new("Bright orange")
+                    end
+                end
+
+                local function iterateAndCheckFolders(parent)
+                    for _, folder in pairs(parent:GetChildren()) do
+                        if folder:IsA("Folder") then
+                            local childParts = checkFolderForChildParts(folder)
+                            for _, childPart in ipairs(childParts) do
+                                outlinePart(childPart)
+                            end
+                            iterateAndCheckFolders(folder)
+                        end
+                    end
+                end
+
+                iterateAndCheckFolders(parentFolder)
+                wait()
+            end
+        end)
+    else
+        for _, part in ipairs(workspace:GetDescendants()) do
+            if part:FindFirstChild("CHEST_out") then
+                part.CHEST_out:Destroy()
+            end
+        end
+    end
 end
+
+local function applyChams(player)
+    if player.Character then
+        for _, part in pairs(player.Character:GetChildren()) do
+            if part:IsA("BasePart") and not part:FindFirstChild("Chams") then
+                local chams = Instance.new("BoxHandleAdornment", part)
+                chams.Name = "Chams"
+                chams.AlwaysOnTop = true
+                chams.ZIndex = 10
+                chams.Adornee = part
+                chams.Size = part.Size
+                chams.Transparency = 0.25
+                chams.Color = BrickColor.new("Bright red")
+            end
+        end
+    end
+end
+
+local function removeChams(player)
+    if player.Character then
+        for _, part in pairs(player.Character:GetChildren()) do
+            if part:IsA("BasePart") then
+                local chams = part:FindFirstChild("Chams")
+                if chams then
+                    chams:Destroy()
+                end
+            end
+        end
+    end
+end
+
+local function toggleChams()
+    if getgenv().chamsEnabled then
+        for _, player in pairs(game:GetService("Players"):GetPlayers()) do
+            if player ~= game.Players.LocalPlayer then
+                applyChams(player)
+            end
+        end
+        game:GetService("Players").PlayerAdded:Connect(function(player)
+            if player ~= game.Players.LocalPlayer then
+                applyChams(player)
+            end
+        end)
+    else
+        for _, player in pairs(game:GetService("Players"):GetPlayers()) do
+            removeChams(player)
+        end
+    end
+end
+
+-- Load initial config
+getgenv().KillAura = config.KillAura or false
+getgenv().chestEspEnabled = config.chestEspEnabled or false
 
 -- Credits
 local Credits = Window:MakeTab({
@@ -38,9 +211,11 @@ local cs = Window:MakeTab({
 
 cs:AddToggle({
     Name = "Kill Aura",
-    Default = false,
+    Default = getgenv().KillAura,
     Callback = function(Value)
         getgenv().KillAura = Value
+        config.KillAura = Value
+        SaveConfig(config)
         KillAura()
     end
 })
@@ -59,9 +234,60 @@ lp:AddButton({
 })
 
 lp:AddButton({
+    Name = "Infinite Jump",
+    Callback = function()
+        local InfiniteJumpEnabled = true
+        game:GetService("UserInputService").JumpRequest:Connect(function()
+            if InfiniteJumpEnabled then
+                game:GetService("Players").LocalPlayer.Character:FindFirstChildOfClass("Humanoid"):ChangeState("Jumping")
+            end
+        end)
+    end
+})
+
+lp:AddButton({
     Name = "Jesus (you can walk on water)",
     Callback = function()
-        loadstring(game:HttpGet("https://raw.githubusercontent.com/screengui/sidescripts/main/Jesus.lua",true))()
+        loadstring(game:HttpGet("https://raw.githubusercontent.com/screengui/sidescripts/main/Jesus.lua", true))()
+    end
+})
+
+-- Player
+local Player = Window:MakeTab({
+    Name = "Player",
+    Icon = "rbxassetid://4483345998",
+    PremiumOnly = false
+})
+
+Player:AddTextbox({
+    Name = "Enter Speed(I advise you to set it to 18)",
+    Default = "16",
+    TextDisappear = true,
+    Callback = function(Value)
+        local speed = tonumber(Value)
+        if speed then
+            game.Players.LocalPlayer.Character.Humanoid.WalkSpeed = speed
+            config.WalkSpeed = speed
+            SaveConfig(config)
+        else
+            print("Please enter a valid number")
+        end
+    end    
+})
+
+Player:AddTextbox({
+    Name = "Enter Jump Power",
+    Default = "50",
+    TextDisappear = true,
+    Callback = function(Value)
+        local jumpPower = tonumber(Value)
+        if jumpPower then
+            game.Players.LocalPlayer.Character.Humanoid.JumpPower = jumpPower
+            config.JumpPower = jumpPower
+            SaveConfig(config)
+        else
+            print("Please enter a valid number")
+        end
     end
 })
 
@@ -105,6 +331,24 @@ Visuals:AddButton({
     end
 })
 
+-- Visuals Toggle Chest ESP
+Visuals:AddToggle({
+    Name = "Toggle Chest ESP(on=off off=on when it's on is lagging",
+    Default = getgenv().chestEspEnabled,
+    Callback = function(Value)
+        toggleChestEsp()
+    end
+})
+
+Visuals:AddToggle({
+    Name = "Toggle Red Chams (75% opacity)",
+    Default = false,
+    Callback = function(Value)
+        getgenv().chamsEnabled = Value
+        toggleChams()
+    end
+})
+
 local dt = Window:MakeTab({
     Name = "Ket Dupe",
     Icon = "rbxassetid://4483345998",
@@ -121,7 +365,7 @@ dt:AddButton({
 dt:AddButton({
     Name = "Dupe First Slot (works only on tablet and PC, Press Z)",
     Callback = function()
-        loadstring(game:HttpGet("https://pastebin.com/raw/TkAm8wV8",true))()
+        loadstring(game:HttpGet("https://pastebin.com/raw/TkAm8wV8", true))()
     end
 })
 
@@ -135,7 +379,7 @@ local ot = Window:MakeTab({
 ot:AddButton({
     Name = "Infinite Yield (PC Only)",
     Callback = function()
-        loadstring(game:HttpGet("https://raw.githubusercontent.com/EdgeIY/infiniteyield/master/source",true))()
+        loadstring(game:HttpGet("https://raw.githubusercontent.com/EdgeIY/infiniteyield/master/source", true))()
     end
 })
 
@@ -146,4 +390,13 @@ ot:AddButton({
     end
 })
 
+local function makeOrionDraggable()
+    for _, guiElement in pairs(game:GetService("Players").LocalPlayer:WaitForChild("PlayerGui"):GetDescendants()) do
+        if guiElement:IsA("Frame") and guiElement.Name == "Main" then
+            makeDraggable(guiElement)
+        end
+    end
+end
+
+makeOrionDraggable()
 OrionLib:Init()

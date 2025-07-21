@@ -19,6 +19,9 @@ local gameRemotes = replicatedStorage:WaitForChild("GameRemotes", 5)
     elseif game.PlaceId == 15506010437 then
         loadstring(game:HttpGet("https://raw.githubusercontent.com/yijtfjyfjtd/KetHub/refs/heads/main/FunSquidGameGlassBridge2.lua"))() -- FunSquidGameGlassBridge2
         sendNotification("KetHub", "FunSquidGameGlassBridge2 supported")
+    elseif game.PlaceId == 7920018625 then
+        loadstring(game:HttpGet("https://raw.githubusercontent.com/yijtfjyfjtd/KetHub/refs/heads/main/NukeTycoonsNuclear.lua"))() -- NukeTycoonNuclear
+        sendNotification("KetHub", "NukeTycoonNuclear supported")
     else
         sendNotification("KetHub", "This game is not supported")
     end

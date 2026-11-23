@@ -122,13 +122,13 @@ text(card, {
 text(card, {
     Size = UDim2.fromOffset(60, 14),
     Position = UDim2.new(1, -78, 0, 22),
-    Text = "1 beta",
+    Text = "beta",
     TextSize = 10,
     TextColor3 = C.dim,
     TextXAlignment = Enum.TextXAlignment.Right,
 })
 
-local labels = { "Looking for the game", "Downloading Ket Hub", "Starting" }
+local labels = { "Looking for the game", "LOVING Ket Hub", "Starting" }
 local dots, rows = {}, {}
 
 for i, name in ipairs(labels) do
@@ -253,7 +253,7 @@ for i = 1, 24 do
 end
 
 if not found then
-    return fail(1, "No supported Minecraft-style game found")
+    return fail(1, "No supported Minecraft game not found")
 end
 
 step(1, "done")

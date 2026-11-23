@@ -7,7 +7,7 @@ local env = getgenv()
 if env.KetHubLoading then return end
 env.KetHubLoading = true
 
-local BASE = "https://raw.githubusercontent.com/yijtfjyfjtd/KetHub/main/"
+local BASE = "https://raw.githubusercontent.com/yijtfjyfjtd/KetHub/refs/heads/main/KetHub_Loader.lua"
 local SCRIPT = BASE .. "KetHub_Minecraft_v2.lua"
 local REQUIRED = { "AcceptBreakBlock", "BreakBlock", "Attack", "MoveItem", "PlaceBlock" }
 
